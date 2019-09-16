@@ -1,31 +1,14 @@
-pipeline {
-  environment {
-    registry = "shubhampadiya/gs-spring-boot-docker"
-    registryCredential = 'docker-hub-credentials'
-    dockerImage = ''
-  }
-  agent any
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-    stage('Building image') {
-      steps{
-        script {
-          dockerImage = docker.build registry + ":$BUILD_NUMBER"
-        }
-      }
-    }
-    stage('Deploy Image') {
-      steps{
-        script {
-          docker.withRegistry( '', registryCredential ) {
-            dockerImage.push()
-          }
-        }
-      }
-    }
-  }
-}
+  node {
+	    stage('Checkout') {
+		checkout scm
+				}
+		stage('Build Image') {
+		    def mvnHome = tool 'apache-maven-3.2.1'
+		    def dockerImage = sh "sudo ${mvnHome}/bin/mvn package dockerfile:build"
+				}
+		stage('Docker Image Push') {
+		    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+			dockerImage.push()
+			}
+		}
+	}
